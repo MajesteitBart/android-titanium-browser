@@ -7,8 +7,17 @@ replace() {
 
 set_keys() {
     mkdir -p $SCRIPT_DIR/keys
-    echo $LOCAL_TEST_JKS | base64 -d > $SCRIPT_DIR/keys/local.properties
-    echo $STORE_TEST_JKS | base64 -d > $SCRIPT_DIR/keys/test.jks
+    if [ -n "$LOCAL_TEST_JKS" ] && [ -n "$STORE_TEST_JKS" ]; then
+        echo "$LOCAL_TEST_JKS" | base64 -d > $SCRIPT_DIR/keys/local.properties
+        echo "$STORE_TEST_JKS" | base64 -d > $SCRIPT_DIR/keys/test.jks
+    elif [ ! -f "$SCRIPT_DIR/keys/test.jks" ] || [ ! -f "$SCRIPT_DIR/keys/local.properties" ]; then
+        echo "No signing secrets provided; generating local release keystore..."
+        keytool -genkeypair -v -keystore $SCRIPT_DIR/keys/test.jks -storetype PKCS12 \
+            -keyalg RSA -keysize 2048 -validity 10000 -alias foldbrowser \
+            -storepass foldbrowser -keypass foldbrowser \
+            -dname "CN=FoldBrowser, OU=Personal, O=MajesteitBart, L=NL, ST=NL, C=NL"
+        printf 'keyAlias=foldbrowser\nkeyPassword=foldbrowser\nstorePassword=foldbrowser\n' > $SCRIPT_DIR/keys/local.properties
+    fi
     unset LOCAL_TEST_JKS
     unset STORE_TEST_JKS
 }

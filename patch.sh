@@ -48,9 +48,9 @@ feature_overrides.EnableFeature(download::features::kEnableDownloadSaveAsContext
 #if 0
 d}' chrome/browser/chrome_browser_field_trials.cc
 
-# accessibility
-sed -i 's|ChromeAccessibilityUtil.get().isAccessibilityEnabled()|org.chromium.ui.accessibility.AccessibilityState.isComplexUserInteractionServiceEnabled() \|\| org.chromium.ui.accessibility.AccessibilityState.isTouchExplorationEnabled()|' chrome/android/java/src/org/chromium/chrome/browser/tab/TabStateBrowserControlsVisibilityDelegate.java
-sed -i 's|AccessibilityState.isPerformGesturesEnabled()|(AccessibilityState.isComplexUserInteractionServiceEnabled() \|\| AccessibilityState.isTouchExplorationEnabled())|' chrome/browser/ui/messages/android/java/src/org/chromium/chrome/browser/ui/messages/snackbar/SnackbarManager.java
+# accessibility: never lock browser controls auto-hide for non-screen-reader accessibility services
+sed -i 's|ChromeAccessibilityUtil.get().isAccessibilityEnabled()|false|' chrome/android/java/src/org/chromium/chrome/browser/tab/TabStateBrowserControlsVisibilityDelegate.java
+sed -i 's|AccessibilityState.isPerformGesturesEnabled()|AccessibilityState.isTouchExplorationEnabled()|' chrome/browser/ui/messages/android/java/src/org/chromium/chrome/browser/ui/messages/snackbar/SnackbarManager.java
 
 # dev
 # sed -i '0,/modelList.add(buildSettingsItem());/s//modelList.add(mMoreToolsItemBuilder.buildTaskManagerItem());modelList.add(mMoreToolsItemBuilder.buildDevToolsItem());&/' chrome/android/java/src/org/chromium/chrome/browser/tabbed_mode/TabbedAppMenuPropertiesDelegate.java
@@ -182,5 +182,9 @@ if (content::WebContents::HasLiveWebContentsForBrowserContext(profile)) { return
 # crbug.com/444024982: api 31
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.REGULAR) {/|| mSupportedProfileType == SupportedProfileType.REGULAR || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD) {/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
+
+# foldable: auto-hide top controls (tab strip + toolbar) on scroll
+sed -i 's|BASE_FEATURE(kLockTopControlsOnLargeTabletsV2, base::FEATURE_ENABLED_BY_DEFAULT);|BASE_FEATURE(kLockTopControlsOnLargeTabletsV2, base::FEATURE_DISABLED_BY_DEFAULT);|' chrome/browser/flags/android/chrome_feature_list.cc
+sed -i '/LOCK_TOP_CONTROLS_ON_LARGE_TABLETS_V2,/{n;s|/\* defaultValue= \*/ true,|/* defaultValue= */ false,|;}' chrome/browser/flags/android/java/src/org/chromium/chrome/browser/flags/ChromeFeatureList.java
 
 export PATCHED=1
